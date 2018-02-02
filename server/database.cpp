@@ -8,36 +8,26 @@
 using namespace std;
 namespace k
 {
-  
   database::database()
   {
-   
        mysql_init(&mysql);
      if(!mysql_real_connect(&mysql,"localhost","root","xingke",NULL,0,NULL,0))
-         cout << "mysql  connect err"<<endl;
+        {  status =-1;
+           cout << "mysql  connect err"<<endl;
+        }
       else 
+      {
+         status =1;
          cout<< "mysql connected"<<endl;
-       init_table();
+         init_table();
+      }
   } 
  
  int database::init_table()
  {     
-
- 
-   if(mysql_query(&mysql,SQL_CREATE_DATABASE)==0) 
-    { 
-         cout<<"create new database"<<endl;
-         mysql_query(&mysql,SQL_CHANG_DATABASE);
-       
-         if(mysql_query(&mysql,SQL_CREATE_TABLE)==0)
-         cout<<"create new table"<<endl;
-    }
-    else 
-        mysql_query(&mysql,SQL_CHANG_DATABASE);
-
- 
- 
-
+         mysql_query(&mysql,SQL_CREATE_DATABASE);
+         mysql_query(&mysql,SQL_CHANG_DATABASE); 
+         mysql_query(&mysql,SQL_CREATE_TABLE);
      /* result = mysql_store_result(&mysql);
        while((row = mysql_fetch_row(result)))
      {
@@ -45,7 +35,12 @@ namespace k
      } 
 
     }*/
-   #undef sql
    return 0;
  }
+
+
+
+
+
+
 }

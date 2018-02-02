@@ -7,8 +7,8 @@
 #include <string.h>
 #include <iostream>
 #include <unistd.h>
-#define  PORT         8080 
-#define  MAX_CONNECT  4096
+#include "main.h"
+
 
 #include <netinet/in.h>
 #include <netdb.h> 
