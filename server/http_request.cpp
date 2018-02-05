@@ -56,8 +56,6 @@ int http_request::analyze()    //解析协议
                ip =value;
          if (key ==  "port")
                 port = value;
-         if (key ==  "k")
-                   k = value;
          if(end == 1)
          break;     
       } 

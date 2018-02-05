@@ -1,23 +1,22 @@
 
 
-#include "service_finder_s.h"
-#include "connect.h"
-#include "http_request.h"
 #include "database.h"
+ 
+int main()  
+{  
+ 
+ k::mysql  sql("192.168.1.100","root","xingke","service_finder","service_table") ;
+       //sql.create_database();  //临时的建库建表操作
+ 
+ /*test*/
 
-k::Connect C;
-k::service_finder_s S;
-
-int main()
-{ 
-   
- k::database sql;
-
- // C.Listen();
-         
-
-
-
-
-
-}
+      if(!sql.connect())
+      
+       sql.insert("ftp","192.168.1.1","80");     //ok
+       sql.find("ftp");                          //ok
+       sql.del("1");                             //ok
+       sql.insert("web","192.168.1.2","8080");   //ok
+       sql.update("1");                          //ok
+      
+      
+}    

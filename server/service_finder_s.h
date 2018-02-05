@@ -25,10 +25,10 @@ namespace k
         string response(int sockfd);     //处理响应
    public:
  /*     string  _register(http_request*){};
-      string  unregister(http_request*){};
-      string  query(http_request*){};
-      int  keep_alive(int sock,http_request*){}; 
-*/
+        string  unregister(http_request*){};
+        string  query(http_request*){};
+        int  keep_alive(int sock,http_request*){}; 
+*/ 
 
       int  get_msg(int sockfd,char* msg);
 
