@@ -1,27 +1,32 @@
-obj = main.o connect.o  http_request.o service_finder_s.o database.o
-src = main.cpp connect.cpp http_request.cpp service_finder_s.cpp 
-run:main
-	./main
-main:$(obj)
-	g++  -o main $(obj)  -lmysqlclient  
+ifeq ($(make_basedir),) 
+	make_basedir := ..
+endif
 
-main.o:main.cpp 
-	g++ -c -o main.o main.cpp 
-connect.o:connect.cpp
-	g++ -c -o connect.o connect.cpp
-service_finder_s.o:service_finder_s.cpp
-	g++ -c -o  service_finder_s.o  service_finder_s.cpp
-pthread_work.o:pthread_work.cpp
-	g++ -c -o phtread_work.o pthread_work.cpp
-http_request.o:http_request.cpp
-	g++ -c -o http_request.o http_request.cpp
-database.o:database.cpp
-	g++ -c -o database.o database.cpp
+CXXFLAGS := -g -std=c++11
 
-gdb:debug
-	gdb debug
+INCLUDE := -I$(make_basedir)/
+INCLUDE += -I$(make_basedir)/deps
 
-debug:$(src)
-	g++ -g -o debug  $(src);
+LIBDIR := -L$(make_basedir)/deps
+LIBDIR += -L$(make_basedir)/deps/libevent/lib 
 
-	
+LIB := -levent -lpthread
+
+.cpp.o:
+	g++ $(CXXFLAGS) $(INCLUDE) -Wno-deprecated -c -o $@ $< 
+
+.c.o:
+	gcc $(CXXFLAGS) -c -o $@ $<
+
+src := main.cpp
+src += http_server.cpp
+
+
+obj := $(src:.cpp=.o)
+
+all : $(obj)
+	g++ -o main $(INCLUDE) $(obj) $(LIBDIR) $(LIB) 
+
+clean: $(obj)
+	rm -f *.o
+	rm -f main
