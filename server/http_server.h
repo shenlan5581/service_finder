@@ -2,8 +2,8 @@
 #include <functional>
 #include <string>
 #include <map>
-#include <libevent/include/event.h>
-#include <libevent/include/evhttp.h>
+#include <event.h>
+#include <evhttp.h>
 
 namespace http {
 

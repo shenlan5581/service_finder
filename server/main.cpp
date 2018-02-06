@@ -3,6 +3,7 @@
 #include <functional>
 #include <string>
 #include <iostream>
+#include <json/json.h>
 using namespace std;
 using namespace placeholders;
 
@@ -12,11 +13,19 @@ public:
     {
         struct evbuffer *buf;
         buf = evbuffer_new();
-        string resultURL = "thank you\n";
-        cout<<"query end"<<endl;
-        evbuffer_add_printf(buf, resultURL.c_str());
+
+
+	Json::Value root;
+	root["ret"] = 0;
+	root["message"] = "ok";
+	root["servers"][0]["id"] = "1";
+	root["servers"][0]["ip"] = "127.0.0.1";
+	root["servers"][0]["port"] = 80;
+
+	Json::FastWriter writer;
+	std::string output = writer.write(root);
+        evbuffer_add_printf(buf, output.c_str());
         evhttp_send_reply(req, HTTP_OK, "OK", buf);
-        cout<<"search end"<<endl;
         evbuffer_free(buf);    
     }
 };
