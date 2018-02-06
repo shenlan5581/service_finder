@@ -1,51 +1,79 @@
-#include <stdio.h>
-#include "http_server.h"
-#include <functional>
-#include <string>
-#include <iostream>
 #include <json/json.h>
+#include <mysql++/mysql++.h>
+#include <stdio.h>
+#include <functional>
+#include <iostream>
+#include <string>
+#include "http_server.h"
 using namespace std;
 using namespace placeholders;
 
 class TestHandler : public http::IHandler {
-public:
-    void handle(struct evhttp_request *req) 
-    {
-        struct evbuffer *buf;
-        buf = evbuffer_new();
+ public:
+  void handle(struct evhttp_request *req) {
+    struct evbuffer *buf;
+    buf = evbuffer_new();
 
+    Json::Value root;
+    root["ret"] = 0;
+    root["message"] = "ok";
+    root["servers"][0]["id"] = "1";
+    root["servers"][0]["ip"] = "127.0.0.1";
+    root["servers"][0]["port"] = 80;
 
-	Json::Value root;
-	root["ret"] = 0;
-	root["message"] = "ok";
-	root["servers"][0]["id"] = "1";
-	root["servers"][0]["ip"] = "127.0.0.1";
-	root["servers"][0]["port"] = 80;
-
-	Json::FastWriter writer;
-	std::string output = writer.write(root);
-        evbuffer_add_printf(buf, output.c_str());
-        evhttp_send_reply(req, HTTP_OK, "OK", buf);
-        evbuffer_free(buf);    
-    }
+    Json::FastWriter writer;
+    std::string output = writer.write(root);
+    evbuffer_add_printf(buf, output.c_str());
+    evhttp_send_reply(req, HTTP_OK, "OK", buf);
+    evbuffer_free(buf);
+  }
 };
 
-
 class DefaultHandler : public http::IHandler {
-public:
-    void handle(struct evhttp_request *req) 
-    {
+ public:
+  void handle(struct evhttp_request *req) {
+    mysqlpp::Connection conn(false);
+    if (conn.connect("service", "127.0.0.1:3306", "root", "123456")) {
+      // Retrieve a subset of the sample stock table set up by resetdb
+      // and display it.
+      mysqlpp::Query query =
+          conn.query("select id,name,ip,port from tb_server");
+      if (mysqlpp::StoreQueryResult res = query.store()) {
+        cout << "We have:" << endl;
+        Json::Value root;
+        root["ret"] = 0;
+        root["message"] = "ok";
+
+        mysqlpp::StoreQueryResult::const_iterator it;
+        int i = 0;
+        for (it = res.begin(); it != res.end(); ++it) {
+          mysqlpp::Row row = *it;
+          cout << '\t' << row[0] << endl;
+          root["servers"][i]["id"] = (int)row[0];
+          root["servers"][i]["name"] = row[1].c_str();
+          root["servers"][i]["ip"] = row[2].c_str();
+          root["servers"][i]["port"] = (int)row[3];
+          i++;
+        }
         struct evbuffer *buf;
         buf = evbuffer_new();
-        string resultURL = "this is default handler\n";
-        evbuffer_add_printf(buf, resultURL.c_str());
+
+        Json::FastWriter writer;
+        std::string output = writer.write(root);
+        evbuffer_add_printf(buf, output.c_str());
         evhttp_send_reply(req, HTTP_OK, "OK", buf);
-        evbuffer_free(buf);    
-    }    
+        evbuffer_free(buf);
+      } else {
+        cerr << "Failed to get item list: " << query.error() << endl;
+      }
+    } else {
+      cerr << "DB connection failed: " << conn.error() << endl;
+    }
+  }
 };
 
 int main(void) {
-    http::Server server;
-    server.Handle("/test", new TestHandler());
-    server.ListenAndServe(1811, 2, 1024, new DefaultHandler());
+  http::Server server;
+  server.Handle("/test", new TestHandler());
+  server.ListenAndServe(1811, 2, 1024, new DefaultHandler());
 }
