@@ -6,11 +6,14 @@ CXXFLAGS := -g -std=c++11
 
 INCLUDE := -I$(make_basedir)/
 INCLUDE += -I$(make_basedir)/deps
+INCLUDE += -I$(make_basedir)/deps/libevent/include
+INCLUDE += -I$(make_basedir)/deps/jsoncpp/include
 
 LIBDIR := -L$(make_basedir)/deps
 LIBDIR += -L$(make_basedir)/deps/libevent/lib 
+LIBDIR += -L$(make_basedir)/deps/jsoncpp/lib
 
-LIB := -levent -lpthread
+LIB := -levent -lpthread -ljsoncpp
 
 .cpp.o:
 	g++ $(CXXFLAGS) $(INCLUDE) -Wno-deprecated -c -o $@ $< 
