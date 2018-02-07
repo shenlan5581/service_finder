@@ -1,5 +1,12 @@
-obj = main.o  database.o
+
+
+ 
+
+obj = main.o database.o
 src = main.cpp  database.cpp  
+
+ 
+
 run:main
 	./main
 main:$(obj)
@@ -14,6 +21,7 @@ http_request.o:http_request.cpp
 	g++ -c -o http_request.o http_request.cpp
 database.o:database.cpp
 	g++ -c -o database.o database.cpp
+ 
 	
 clean:$(obj)
 	rm $(obj)
