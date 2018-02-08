@@ -1,5 +1,5 @@
-#include <json/json.h>
-#include <mysql++/mysql++.h>
+      //#include <json/json.h>
+      //#include <mysql++/mysql++.h> nouse
 #include <stdio.h>
 #include <functional>
 #include <iostream>
@@ -14,7 +14,7 @@ class TestHandler : public http::IHandler {
     struct evbuffer *buf;
     buf = evbuffer_new();
 
-    Json::Value root;
+ /*   Json::Value root;
     root["ret"] = 0;
     root["message"] = "ok";
     root["servers"][0]["id"] = "1";
@@ -25,14 +25,14 @@ class TestHandler : public http::IHandler {
     std::string output = writer.write(root);
     evbuffer_add_printf(buf, output.c_str());
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
-    evbuffer_free(buf);
+    evbuffer_free(buf);*/
   }
 };
 
 class DefaultHandler : public http::IHandler {
  public:
   void handle(struct evhttp_request *req) {
-    mysqlpp::Connection conn(false);
+ /*   mysqlpp::Connection conn(false);
     if (conn.connect("service", "127.0.0.1:3306", "root", "123456")) {
       // Retrieve a subset of the sample stock table set up by resetdb
       // and display it.
@@ -54,7 +54,7 @@ class DefaultHandler : public http::IHandler {
           root["servers"][i]["ip"] = row[2].c_str();
           root["servers"][i]["port"] = (int)row[3];
           i++;
-        }
+        }  //JSON
         struct evbuffer *buf;
         buf = evbuffer_new();
 
@@ -68,12 +68,12 @@ class DefaultHandler : public http::IHandler {
       }
     } else {
       cerr << "DB connection failed: " << conn.error() << endl;
-    }
-  }
+    }*/
+  } 
 };
 
 int main(void) {
-  http::Server server;
+/*  http::Server server;
   server.Handle("/test", new TestHandler());
-  server.ListenAndServe(1811, 2, 1024, new DefaultHandler());
+  server.ListenAndServe(1811, 2, 1024, new DefaultHandler());*/
 }

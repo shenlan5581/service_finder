@@ -38,7 +38,7 @@ public:
     virtual result   del(item* ID);   
     virtual result   update(item*ID);  
             result   del_invalid(item *tm);
-   void           create_database();      
+    void             create_database();      
 private:
    int connect_state;
    MYSQL        Mysql;
