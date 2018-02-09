@@ -8,52 +8,114 @@
 using namespace std;  
 namespace k
 {
-//set mysql
+//set mysql  info
 #define CONNECT         k::item i; \
-                        i["addr"]="192.168.1.108";\
+                        i["addr"]="192.168.1.104";\
                         i["user"]="root";\
                         i["password"]= "xingke";\
                         i["database_name"]="service_finder";
+#define TABLE           "service_table"
+
 
 
 serve::~serve()
 { 
-  delete msg;
   delete sql;
 }
+int serve::analyze( string *url,item * info)   // url
+{  cout<<*url<<endl;
+  int end=0;
+      string::size_type b,z;
+      string key;
+      string value;
+      b=url->find("?");
+      z=b;
+  while(1)    //key and value
+      {        
+            b=z;    
+            z =url->find("=",b);      
+            if(z == string::npos)
+            return 0;
+            else 
+            key = url->substr(b+1,z-b-1);
+            //test  cout<<"key:"<<key<<"  "; 
+            b = z;                      
+            z = url->find("&",b);
+            if(z == string::npos)          
+              {
+                  z = url->find("\0",b);
+                if(z == string::npos)        
+                  return -1;
+                  else                        
+                    { 
+                      value= url->substr(b+1,z-b-1);
+                      end =1;
+                    }
+              }else
+                 value= url->substr(b+1,z-b-1);
 
- void serve_reg:: handle(struct evhttp_request *req)
+                 //test  cout<<"value:"<<value<<endl;
+                 const string k= key;
+                    (*info)[k]=value;
+               if(end == 1)
+               break;     
+      } 
+   // std::cout << request_type<<service_name<<ip<<port<<id; //test  
+  return 1; 
+}
+ 
+  void serve_reg:: handle(struct evhttp_request *req)
  {  
-     std::string  u  = evhttp_request_get_uri(req);
-     cout<<u<<endl;
-     msg = new uri(u);          
-     sql = new mysql; 
-        CONNECT;
-       if(sql->connect(&i))
-        cout<<"connect ok"<<endl;
-        else 
-        cout<<"error"<<endl;
+   cout<<"register*****"<<endl;
+ 
+   std::string url = evhttp_request_get_uri(req);    //get url
+   cout<<url<<endl;
+   cout<<"<handler> register"<<endl;
+   sql = new mysql; 
+    {                                 // to database
+      CONNECT;
+      int e = sql->connect(&i);
+      assert(e);
+    }
+
+       item info,result;
+       item::iterator p;
+       analyze(&url,&info);
+  
+       info["table_name"]=TABLE; 
+       cout<<"1"<<endl;
+       result=sql->insert(&info);
+       cout<<"2"<<endl;
+       p=result.find("state");
+       assert(p !=result.end()); 
+       cout<<p->second<<endl;
+       p= result.find("id");
+       assert(p !=result.end());
+       cout<<p->second<<endl;
+
+  
+
+  
  }
  
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ //evhttp_send_reply(req, 200, "OK", NULL);  
 
 /*
 void reg::handle(struct evhttp_request *req)

@@ -1,6 +1,7 @@
 
 #ifndef SERVE_H
 #define SERVE_H
+#include <assert.h>
 #include "http_server.h"
 #include "database.h"
 #include "msg.h"
@@ -13,9 +14,10 @@ class serve : public http::IHandler
  virtual void handle(struct evhttp_request *req)=0;
 
  protected:
-    uri        *msg;
     database   *sql;  
+    int analyze( string *url,item * info);
            ~serve();
+
  };
  
 class serve_reg:public serve

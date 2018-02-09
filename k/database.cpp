@@ -37,15 +37,31 @@ result mysql::insert(item * service)
  
 string sql_ins  =   "insert into "+S("table_name")+" (service_name,IP,port ) values ('"+S("service_name")+"','"+S("ip")+"','"+S("port")+"');";
 string sql_sel  =   "select * from "+S("table_name")+" where service_name = '"+S("service_name")+"' and ip = '"+S("ip")+"' and port = '"+S("port")+"';";
+string sql_ID  =    "select * from "+S("table_name")+" where service_name = '"+S("service_name")+"' and ip = '"+S("ip")+"' and port = '"+S("port")+"';";
     if(!mysql_query(&Mysql,sql_sel.c_str()))  
       {
          res = mysql_store_result(&Mysql);      
           int row_count = mysql_num_rows(res);               
             if(row_count == 0)    
-            {  T("s");
+            {   
              if(!mysql_query(&Mysql,sql_ins.c_str()))  
-              ret["state"] = "insert successd";T("d");
-            }
+              {
+                   if(!mysql_query(&Mysql,sql_sel.c_str())) 
+                   {    res = mysql_store_result(&Mysql); 
+                        row_count= mysql_num_rows(res);             
+                        if(row_count != 0)
+                        {  
+                          row = mysql_fetch_row(res);    
+                          ret["id"]=row[0];                 //          E  
+                          ret["state"] = "insert successd";T("d");
+                        }else 
+                       {  
+                         ret["id"]=-1;  
+                       }
+                   }
+              }
+
+            }  
             else   
             {  
               ret["state"] = "item exiset";

@@ -16,7 +16,7 @@ class TestHandler : public http::IHandler {
     struct evbuffer *buf;
     buf = evbuffer_new();
     cout<<"test"<<endl;
- /*   Json::Value root;
+    Json::Value root;
     root["ret"] = 0;
     root["message"] = "ok";
     root["servers"][0]["id"] = "1";
@@ -27,7 +27,7 @@ class TestHandler : public http::IHandler {
     std::string output = writer.write(root);
     evbuffer_add_printf(buf, output.c_str());
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
-    evbuffer_free(buf);*/
+    evbuffer_free(buf); 
   }
 };
 
@@ -77,7 +77,7 @@ class DefaultHandler : public http::IHandler {
 int main(void) {  
    http::Server server;
    server.Handle("/register",new serve_reg);
-   server.ListenAndServe(80, 2, 1024, NULL); 
+   server.ListenAndServe(80, 1, 1024, NULL); 
   //server.Handle("regiser/ddd/sd/",NULL);
  
  // k::serve * ser_find = new k::serve;

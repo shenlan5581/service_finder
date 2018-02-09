@@ -7,9 +7,9 @@
 #include <string.h>
 #include <iostream>
 
-#define  SERVER_ADDR  "192.168.1.101"
-#define  PORT         8080 
-#define  MSGLEN    512
+#define  SERVER_ADDR  "192.168.1.104"
+#define  PORT          80 
+#define  MSGLEN        512
 
 #include <netinet/in.h>
 #include <netdb.h>

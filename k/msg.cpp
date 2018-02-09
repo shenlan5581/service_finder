@@ -17,7 +17,7 @@ int uri::analyze()    //解析协议
       string key;
       string value;
 
-      b = message.find("/",12);
+      b = message.find("/",0);
       if(b == string::npos)
       return -1;
       z = message.find("?",b+1);
