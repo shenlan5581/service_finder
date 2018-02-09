@@ -10,17 +10,35 @@ namespace k
 class serve : public http::IHandler
 {
  public:
- virtual void handle(struct evhttp_request *req);
+ virtual void handle(struct evhttp_request *req)=0;
 
- private:
-     void  reg(uri *); 
-     void  find(uri *);
-     void  dle(uri *);
-     void  update(uri *);
-    
-    database *mysql;  
+ protected:
+    uri        *msg;
+    database   *sql;  
+           ~serve();
+ };
+ 
+class serve_reg:public serve
+{
+virtual void handle(struct evhttp_request *req);
 };
+class serve_unreg:public serve
+{
+virtual void handle(struct evhttp_request *req);
+};
+class serve_find:public serve
+{
+virtual void handle(struct evhttp_request *req);
+};
+class serve_update:public serve
+{
+virtual void handle(struct evhttp_request *req);
+};
+ 
 }
+
+
+
 
 
 #endif

@@ -1,21 +1,21 @@
-      //#include <json/json.h>
-      //#include <mysql++/mysql++.h> nouse
+// #include <json.h>
+//#include <mysql++/mysql++.h> nouse
 #include <stdio.h>
 #include <functional>
 #include <iostream>
 #include <string>
 #include  "http_server.h" 
 #include  "serve.h"
- 
+   
 using namespace std;
 using namespace placeholders;
-
+using namespace k;
 class TestHandler : public http::IHandler {
  public:
   void handle(struct evhttp_request *req) {
     struct evbuffer *buf;
     buf = evbuffer_new();
-
+    cout<<"test"<<endl;
  /*   Json::Value root;
     root["ret"] = 0;
     root["message"] = "ok";
@@ -74,12 +74,11 @@ class DefaultHandler : public http::IHandler {
   } 
 };
 
-int main(void) {
-
-    cout<<"ok";
-  http::Server server;
- // server.Handle("/test", new TestHandler());
-  server.ListenAndServe(80, 2, 1024, new k::serve); 
+int main(void) {  
+   http::Server server;
+   server.Handle("/register",new serve_reg);
+   server.ListenAndServe(80, 2, 1024, NULL); 
+  //server.Handle("regiser/ddd/sd/",NULL);
  
  // k::serve * ser_find = new k::serve;
   //ser_find->handle(NULL);

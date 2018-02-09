@@ -15,6 +15,13 @@ using std::string;
  
 namespace k
 { 
+
+
+
+
+
+
+
 typedef  std::map<string,string> result;
 typedef  std::map<string,string> item;
   class database 

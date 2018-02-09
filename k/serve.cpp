@@ -5,17 +5,35 @@
 #include <string>
 #include <iostream>
 
-using namespace std;
+using namespace std;  
 namespace k
 {
-void serve::handle(struct evhttp_request *req)
-{ 
-      cout<<"connect"<<endl;
-      std::string  u = evhttp_request_get_uri(req);
-      cout << u  <<":uri"<<endl;
-      k::uri    msg(u);
-      cout<<msg.request_type<<endl;
+//set mysql
+#define CONNECT         k::item i; \
+                        i["addr"]="192.168.1.108";\
+                        i["user"]="root";\
+                        i["password"]= "xingke";\
+                        i["database_name"]="service_finder";
 
+
+serve::~serve()
+{ 
+  delete msg;
+  delete sql;
+}
+
+ void serve_reg:: handle(struct evhttp_request *req)
+ {  
+     std::string  u  = evhttp_request_get_uri(req);
+     cout<<u<<endl;
+     msg = new uri(u);          
+     sql = new mysql; 
+        CONNECT;
+       if(sql->connect(&i))
+        cout<<"connect ok"<<endl;
+        else 
+        cout<<"error"<<endl;
+ }
  
 
 
@@ -24,6 +42,34 @@ void serve::handle(struct evhttp_request *req)
 
 
 
+
+
+
+
+
+
+
+
+
+
+}
+
+
+/*
+void reg::handle(struct evhttp_request *req)
+{ 
+      cout<<"connect"<<endl;
+      std::string  u = evhttp_request_get_uri(req);
+     cout<<"uri:"<<u<<endl;
+     struct evhttp_uri *decoded = NULL;
+     decoded = evhttp_uri_parse(u.c_str());
+     string path = evhttp_uri_get_path(decoded);
+
+
+      cout<<"path"<< path<<endl; 
+     // string host= evhttp_uri_get_host(decoded);
+   //   cout <<"host"<<host<<endl;
+*/
  
 /*======================================================================
        k::item i;
@@ -64,9 +110,4 @@ void serve::handle(struct evhttp_request *req)
        sql.del(&i);
                          */              
  
-
-
-
-}
-
-}
+ 

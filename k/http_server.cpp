@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <iostream>
 using namespace std;
 using namespace placeholders;
 
@@ -17,7 +18,8 @@ namespace http {
 void Server::Handle(const std::string &uri, IHandler *handler) {
   std::map<std::string, IHandler *>::const_iterator iter = mux_.find(uri);
   assert(iter == mux_.end());
-  mux_[uri] = handler;    //??
+  mux_[uri] = handler;         
+    //set new handler
 }
 
 int Server::ListenAndServe(int port, int nthreads, int backlog,
@@ -76,8 +78,14 @@ int Server::ensure_listen(int port, int backlog) {  //make socket
 void Server::event_cb(struct evhttp_request *req, void *arg) {
   Server *server = (Server *)arg;
   std::string uri = evhttp_request_get_uri(req);
+//==============k  get /path  from uri  
+     struct evhttp_uri *decoded = NULL;
+     decoded = evhttp_uri_parse(uri.c_str());
+     uri = evhttp_uri_get_path(decoded);
+//==============k
   std::map<std::string, IHandler *>::const_iterator iter =
       server->mux_.find(uri);
+
   if (iter != server->mux_.end()) {
     iter->second->handle(req);
     return;
@@ -85,6 +93,7 @@ void Server::event_cb(struct evhttp_request *req, void *arg) {
 
   if (server->default_handler_ != NULL) {
     server->default_handler_->handle(req);
+    cout<<"define"<<endl;
   }
 }
 
