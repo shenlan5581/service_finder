@@ -1,4 +1,4 @@
-// #include <json.h>
+ 
 //#include <mysql++/mysql++.h> nouse
 #include <stdio.h>
 #include <functional>
@@ -6,7 +6,7 @@
 #include <string>
 #include  "http_server.h" 
 #include  "serve.h"
-   
+#include  "./lib/json/json/json.h"   
 using namespace std;
 using namespace placeholders;
 using namespace k;
@@ -17,24 +17,27 @@ class TestHandler : public http::IHandler {
     buf = evbuffer_new();
     cout<<"test"<<endl;
     Json::Value root;
-    root["ret"] = 0;
+   
     root["message"] = "ok";
+    root["ret"] = 2;
     root["servers"][0]["id"] = "1";
     root["servers"][0]["ip"] = "127.0.0.1";
     root["servers"][0]["port"] = 80;
-
+   
+     
     Json::FastWriter writer;
+   
     std::string output = writer.write(root);
     evbuffer_add_printf(buf, output.c_str());
     evhttp_send_reply(req, HTTP_OK, "OK", buf);
-    evbuffer_free(buf); 
+    evbuffer_free(buf);  
   }
 };
 
 class DefaultHandler : public http::IHandler {
  public:
   void handle(struct evhttp_request *req) {
- /*   mysqlpp::Connection conn(false);
+   /*  mysqlpp::Connection conn(false);
     if (conn.connect("service", "127.0.0.1:3306", "root", "123456")) {
       // Retrieve a subset of the sample stock table set up by resetdb
       // and display it.
@@ -70,18 +73,22 @@ class DefaultHandler : public http::IHandler {
       }
     } else {
       cerr << "DB connection failed: " << conn.error() << endl;
-    }*/
+    } */
   } 
 };
 
 int main(void) {  
    http::Server server;
-   server.Handle("/register",new serve_reg);
-   server.ListenAndServe(80, 1, 1024, NULL); 
-  //server.Handle("regiser/ddd/sd/",NULL);
+    serve_monitor monitor;
+    monitor.handle(NULL);   
+
+   server.Handle("/register",  new serve_reg);
+   server.Handle("/unregister",new serve_unreg);
+   server.Handle("/find",      new serve_find);
+   server.Handle("/update",    new serve_update);
+   
+   server.Handle("/test",      new TestHandler);
+
+   server.ListenAndServe(80, 2, 1024, NULL); 
  
- // k::serve * ser_find = new k::serve;
-  //ser_find->handle(NULL);
-
-
 }

@@ -4,26 +4,25 @@
 #include "serve.h"
 #include <string>
 #include <iostream>
-
+ 
 using namespace std;  
 namespace k
 {
-//set mysql  info
-#define CONNECT         k::item i; \
-                        i["addr"]="192.168.1.104";\
-                        i["user"]="root";\
-                        i["password"]= "xingke";\
-                        i["database_name"]="service_finder";
-#define TABLE           "service_table"
-
-
-
-serve::~serve()
-{ 
-  delete sql;
+ 
+  
+string serve::time = TIME_FOR_NEAR_TO_LAST_UPDATA; 
+int serve::create_connection()
+{
+      sql = new mysql; 
+      CONNECT;
+      int e = sql->connect(&i);
+      if(e)
+      return 1;
+      else return 0;
 }
+
 int serve::analyze( string *url,item * info)   // url
-{  cout<<*url<<endl;
+{   
   int end=0;
       string::size_type b,z;
       string key;
@@ -60,116 +59,227 @@ int serve::analyze( string *url,item * info)   // url
                if(end == 1)
                break;     
       } 
-   // std::cout << request_type<<service_name<<ip<<port<<id; //test  
+   // std::cout << service_name<<ip<<port<<id; //test  
   return 1; 
 }
  
-  void serve_reg:: handle(struct evhttp_request *req)
+ void serve_reg:: handle(struct evhttp_request *req)
  {  
-   cout<<"register*****"<<endl;
- 
-   std::string url = evhttp_request_get_uri(req);    //get url
-   cout<<url<<endl;
-   cout<<"<handler> register"<<endl;
-   sql = new mysql; 
-    {                                 // to database
-      CONNECT;
-      int e = sql->connect(&i);
-      assert(e);
-    }
-
+  pthread_mutex_lock(&mutex_mysql);
+       std::string url = evhttp_request_get_uri(req);    //get url
+       assert(create_connection()); 
+  
+       Json::Value root;  
        item info,result;
        item::iterator p;
-       analyze(&url,&info);
-  
+       analyze(&url,&info);     
+       assert((p=info.find("service_name")) != info.end());
+       assert((p=info.find("ip")) != info.end());
+       assert((p=info.find("port")) != info.end());
        info["table_name"]=TABLE; 
-       cout<<"1"<<endl;
-       result=sql->insert(&info);
-       cout<<"2"<<endl;
+ 
+       result=sql->insert(&info);  //  mysql
+pthread_mutex_unlock(&mutex_mysql);
        p=result.find("state");
-       assert(p !=result.end()); 
-       cout<<p->second<<endl;
-       p= result.find("id");
-       assert(p !=result.end());
-       cout<<p->second<<endl;
-
-  
-
-  
+         string  state = (p=result.find("state"))->second;
+         root["massage"]= state;
+          root["ret"] = 0;
+       if(  state == "successd") 
+        { 
+          root["servers"][0]["id"] =(p=result.find("id"))->second;
+        }
+        else  
+        { 
+          root["servers"][0]["id"] =-1;
+        }
+          root["servers"][0]["service_name"] = "-1";
+          root["servers"][0]["ip"] = "-1";
+          root["servers"][0]["port"] = -1;
+       struct evbuffer *buf;
+       buf = evbuffer_new();
+       Json::FastWriter writer;
+       std::string output = writer.write(root);
+       evbuffer_add_printf(buf, output.c_str());
+       evhttp_send_reply(req, HTTP_OK, "OK", buf);
+       evbuffer_free(buf);  
+       delete sql;
+ 
  }
  
+ void serve_unreg::handle(struct evhttp_request *req)
+ {
+       std::string url = evhttp_request_get_uri(req);    //get url
+pthread_mutex_lock(&mutex_mysql);
+       assert(create_connection());
+  
+       Json::Value root;  
+       item info,result;
+       item::iterator p;
+       analyze(&url,&info);     
+       assert((p=info.find("id")) != info.end());
+       info["table_name"]=TABLE; 
 
+       result=sql->del(&info);  //  mysql
+pthread_mutex_unlock(&mutex_mysql);
+       p=result.find("state");
 
+       string  state = (p=result.find("state"))->second;
+
+          root["massage"]= state;
+          root["ret"] = 0;
+
+       if(  state == "successd") 
+        { 
+          root["servers"][0]["id"] =(p=result.find("id"))->second;
+        }
+        else  
+        { 
+          root["servers"][0]["id"] =-1;
+        }
+          root["servers"][0]["service_name"] = "-1";
+          root["servers"][0]["ip"] = "-1";
+          root["servers"][0]["port"] = -1;
+       struct evbuffer *buf;
+       buf = evbuffer_new();
+       Json::FastWriter writer;
+       std::string output = writer.write(root);
+       evbuffer_add_printf(buf, output.c_str());
+       evhttp_send_reply(req, HTTP_OK, "OK", buf);
+       evbuffer_free(buf);  
+       delete sql;
+   
+ }
+
+  void serve_find::handle(struct evhttp_request *req)
+ {
+       std::string url = evhttp_request_get_uri(req);    //get url
+pthread_mutex_lock(&mutex_mysql);
+       assert(create_connection());
+   
+       Json::Value root;  
+       item info;
+       v_result  v_ret;
+       item::iterator p;
+       analyze(&url,&info);     
+       assert((p=info.find("service_name")) != info.end());
+       info["table_name"]=TABLE;
+       info["time"]=time;
+        
+           v_ret = sql->find(&info);  //  mysql
+pthread_mutex_unlock(&mutex_mysql);
+          item result = v_ret[0];
+          p=result.find("state");
+       string  state = (p=result.find("state"))->second;
+         root["message"]= state;
+  if(state == "successd") 
+    {     
+           root["ret"] = v_ret.size()-1;
+    for(int i=1;i<v_ret.size();++i) 
+    {     
+      root["servers"][i-1]["id"] = (p=v_ret[i].find("id"))->second;
+      root["servers"][i-1]["service_name"] = (p=v_ret[i].find("service_name"))->second;
+      root["servers"][i-1]["ip"] = (p=v_ret[i].find("ip"))->second;
+      root["servers"][i-1]["port"] =(p=v_ret[i].find("port"))->second;
+    }
+   }  
+    else  
+        { 
+          root["ret"] = 0;
+          root["servers"][0]["id"] =-1;
+          root["servers"][0]["service_name"] = "-1";
+          root["servers"][0]["ip"] = "-1";
+          root["servers"][0]["port"] = -1;
+        }    
+       struct evbuffer *buf;
+       buf = evbuffer_new();
+       Json::FastWriter writer;
+       std::string output = writer.write(root);
+       evbuffer_add_printf(buf, output.c_str());
+       evhttp_send_reply(req, HTTP_OK, "OK", buf);
+       evbuffer_free(buf);  
+       delete sql;
+ 
+ }
+
+void serve_update::handle(struct evhttp_request *req)
+ {
+       std::string url = evhttp_request_get_uri(req);    //get url
+pthread_mutex_lock(&mutex_mysql);
+       assert(create_connection()); 
+ 
+       Json::Value root;  
+       item info,result;
+       item::iterator p;
+       analyze(&url,&info);     
+       assert((p=info.find("id")) != info.end());
+       info["table_name"]=TABLE; 
+ 
+       result=sql->update(&info);  //  mysql
+pthread_mutex_unlock(&mutex_mysql);
+       p=result.find("state");
+       string  state = (p=result.find("state"))->second;
+
+          root["massage"]= state;
+          root["ret"] = 0;
+
+       if(  state == "successd") 
+        { 
+          root["servers"][0]["id"] =(p=result.find("id"))->second;
+        }
+        else  
+        { 
+          root["servers"][0]["id"] =-1;
+        }
+          root["servers"][0]["service_name"] = "-1";
+          root["servers"][0]["ip"] = "-1";
+          root["servers"][0]["port"] = -1;
+       struct evbuffer *buf;
+       buf = evbuffer_new();
+       Json::FastWriter writer;
+       std::string output = writer.write(root);
+       evbuffer_add_printf(buf, output.c_str());
+       evhttp_send_reply(req, HTTP_OK, "OK", buf);
+       evbuffer_free(buf);  
+       delete sql;
+      
+    }
+
+void serve_monitor::handle(struct evhttp_request *req)
+ {
+     pthread_t pid;
+     int  r;
+ pthread_mutex_init(&mutex_mysql,NULL);
+     r = pthread_create(&pid,NULL,monitoring,this);
+     assert(r == 0);
+     //pthread_join(pid, NULL);
+     
+    }
+void * serve::monitoring(void * a)
+ {   
+  
+   serve_monitor *monitor = (serve_monitor *)a;
+   while(1)
+   {
+        sleep(TIME_FOR_MONITOR);
+   pthread_mutex_lock(&monitor->mutex_mysql);      
+    {      
+      
+       assert(monitor->create_connection());   
+       item info,result;
+       item::iterator p;
+       info["table_name"] = TABLE; 
+       info["time"] =time;
+       result=monitor->sql->del_invalid(&info);  //  mysql
+
+       p=result.find("state");
+
+       cout<<"monitoring:   "<<p->second<<endl;
+
+       delete monitor->sql;
+     } 
+   pthread_mutex_unlock(&monitor->mutex_mysql);
+   }
+ }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
- 
- //evhttp_send_reply(req, 200, "OK", NULL);  
-
-/*
-void reg::handle(struct evhttp_request *req)
-{ 
-      cout<<"connect"<<endl;
-      std::string  u = evhttp_request_get_uri(req);
-     cout<<"uri:"<<u<<endl;
-     struct evhttp_uri *decoded = NULL;
-     decoded = evhttp_uri_parse(u.c_str());
-     string path = evhttp_uri_get_path(decoded);
-
-
-      cout<<"path"<< path<<endl; 
-     // string host= evhttp_uri_get_host(decoded);
-   //   cout <<"host"<<host<<endl;
-*/
- 
-/*======================================================================
-       k::item i;
-       k::item::iterator p;
-       k::mysql  sql;
-       i["addr"]="192.168.1.108";
-       i["user"]="root";
-       i["password"]= "xingke";
-       i["database_name"]="service_finder";
-       sql.connect(&i);
-                                              //sql.create_database();  
-       i.clear();
-       i["table_name"]="service_table";
-       i["service_name"]="dns";
-       i["ip"]= "192.168.1.80";
-       i["port"]="21";
-       i= sql.insert(&i);  //ok
-       cout << (p=(i.find("state")))->second ;
-   
-       i.clear();
-       i["service_name"]="dns";
-       i["table_name"]="service_table";
-       i["time"]="40";
-       sql.find(&i);   
-                                  //ok
-       i.clear();
-       i["time"]="20";
-       sql.del_invalid(&i);       //ok                          
-      
-       i.clear();
-       i["table_name"]= "service_table"; 
-       i["id"]="10"; 
-       sql.update(&i);           //ok   
-       
-        i.clear();
-       i["table_name"]= "service_table"; 
-       i["id"]="10"; 
-       sql.del(&i);
-                         */              
- 
  
