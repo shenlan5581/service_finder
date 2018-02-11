@@ -86,7 +86,7 @@ int main(void) {
    server.Handle("/unregister",new serve_unreg);
    server.Handle("/find",      new serve_find);
    server.Handle("/update",    new serve_update);
-   
+
    server.Handle("/test",      new TestHandler);
 
    server.ListenAndServe(80, 2, 1024, NULL); 
