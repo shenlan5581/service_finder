@@ -21,8 +21,8 @@ namespace k
 
 #define TABLE           "service_table"  // datebase table name
 
-#define TIME_FOR_MONITOR                30
-#define TIME_FOR_NEAR_TO_LAST_UPDATA   "60"          
+#define TIME_FOR_MONITOR                120
+#define TIME_FOR_NEAR_TO_LAST_UPDATA   "30"          
  
 
 class serve : public http::IHandler

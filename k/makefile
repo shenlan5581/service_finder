@@ -14,9 +14,10 @@ INCLUDE += -I$(make_basedir) lib/a/include
 LIBDIR := -L. 
 LIBDIR += -L$(make_basedir) lib
 LIBDIR += -L$(make_basedir) lib/libevent/lib 
-LIBDIR += -L$(make_basedir) lib/sql/lib 
+#LIBDIR += -L$(make_basedir) lib/sql/lib 
 LIBDIR += -L$(make_basedir) lib/json
- 
+LIBDIR += -L/usr/lib64 
+
 
 LIB := -levent -lpthread -lmysqlclient -ljsoncpp   
 
@@ -35,7 +36,7 @@ run:all
 	./main
 
 all : $(obj)   
-	g++  -g -o  main $(INCLUDE) $(obj) $(LIBDIR) $(LIB) -Wl,-rpath ./lib/sql/lib -fPIC
+	g++  -g -o  main $(INCLUDE) $(obj) $(LIBDIR) $(LIB)    -fPIC
  
 clean: $(obj)
 	rm -f *.o

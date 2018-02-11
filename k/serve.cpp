@@ -12,9 +12,10 @@ namespace k
   
 string serve::time = TIME_FOR_NEAR_TO_LAST_UPDATA; 
 int serve::create_connection()
-{
+{    
       sql = new mysql; 
       CONNECT;
+ 
       int e = sql->connect(&i);
       if(e)
       return 1;
@@ -79,7 +80,10 @@ int serve::analyze( string *url,item * info)   // url
        info["table_name"]=TABLE; 
  
        result=sql->insert(&info);  //  mysql
+ 
+       delete sql;
 pthread_mutex_unlock(&mutex_mysql);
+     
        p=result.find("state");
          string  state = (p=result.find("state"))->second;
          root["massage"]= state;
@@ -102,7 +106,7 @@ pthread_mutex_unlock(&mutex_mysql);
        evbuffer_add_printf(buf, output.c_str());
        evhttp_send_reply(req, HTTP_OK, "OK", buf);
        evbuffer_free(buf);  
-       delete sql;
+    
  
  }
  
@@ -120,6 +124,7 @@ pthread_mutex_lock(&mutex_mysql);
        info["table_name"]=TABLE; 
 
        result=sql->del(&info);  //  mysql
+       delete sql;
 pthread_mutex_unlock(&mutex_mysql);
        p=result.find("state");
 
@@ -146,7 +151,7 @@ pthread_mutex_unlock(&mutex_mysql);
        evbuffer_add_printf(buf, output.c_str());
        evhttp_send_reply(req, HTTP_OK, "OK", buf);
        evbuffer_free(buf);  
-       delete sql;
+       
    
  }
 
@@ -166,6 +171,7 @@ pthread_mutex_lock(&mutex_mysql);
        info["time"]=time;
         
            v_ret = sql->find(&info);  //  mysql
+            delete sql;
 pthread_mutex_unlock(&mutex_mysql);
           item result = v_ret[0];
           p=result.find("state");
@@ -197,7 +203,7 @@ pthread_mutex_unlock(&mutex_mysql);
        evbuffer_add_printf(buf, output.c_str());
        evhttp_send_reply(req, HTTP_OK, "OK", buf);
        evbuffer_free(buf);  
-       delete sql;
+      
  
  }
 
@@ -215,6 +221,7 @@ pthread_mutex_lock(&mutex_mysql);
        info["table_name"]=TABLE; 
  
        result=sql->update(&info);  //  mysql
+       delete sql;
 pthread_mutex_unlock(&mutex_mysql);
        p=result.find("state");
        string  state = (p=result.find("state"))->second;
@@ -240,7 +247,7 @@ pthread_mutex_unlock(&mutex_mysql);
        evbuffer_add_printf(buf, output.c_str());
        evhttp_send_reply(req, HTTP_OK, "OK", buf);
        evbuffer_free(buf);  
-       delete sql;
+     
       
     }
 
@@ -256,7 +263,7 @@ void serve_monitor::handle(struct evhttp_request *req)
     }
 void * serve::monitoring(void * a)
  {   
-  
+ 
    serve_monitor *monitor = (serve_monitor *)a;
    while(1)
    {
@@ -274,10 +281,10 @@ void * serve::monitoring(void * a)
        p=result.find("state");
 
        cout<<"monitoring:   "<<p->second<<endl;
-
        delete monitor->sql;
      } 
    pthread_mutex_unlock(&monitor->mutex_mysql);
+ 
    }
  }
 }

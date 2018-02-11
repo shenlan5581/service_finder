@@ -18,23 +18,24 @@ int   mysql::connect(item *acc)
    if(!mysql_real_connect(&Mysql,E("addr"),E("user"),E("password"),E("database_name"),0,NULL,0))
         {                                       
           connect_state = 0; cout <<"01"<<endl;
+      #undef  MARAMETER 
           return 0;          
         }   
       else       //successed           
         {  
-           connect_state = 1;
+           connect_state = 1;     
+       #undef  MARAMETER 
            return 1; 
         }    
-#undef  MARAMETER     
+    
 }  
 
 result mysql::insert(item * service)
-{     
+{       
  item::iterator iter; 
  #define  MARAMETER   service
  result ret;
  UNCONNECTED 
- 
 string sql_ins  =   "insert into "+S("table_name")+" (service_name,IP,port ) values ('"+S("service_name")+"','"+S("ip")+"','"+S("port")+"');";
 string sql_sel  =   "select * from "+S("table_name")+" where service_name = '"+S("service_name")+"' and ip = '"+S("ip")+"' and port = '"+S("port")+"';";
 string sql_ID  =    "select * from "+S("table_name")+" where service_name = '"+S("service_name")+"' and ip = '"+S("ip")+"' and port = '"+S("port")+"';";
@@ -44,10 +45,13 @@ string sql_ID  =    "select * from "+S("table_name")+" where service_name = '"+S
           int row_count = mysql_num_rows(res);               
             if(row_count == 0)    
             {   
+                 
              if(!mysql_query(&Mysql,sql_ins.c_str()))  
               {
                    if(!mysql_query(&Mysql,sql_sel.c_str())) 
-                   {    res = mysql_store_result(&Mysql); 
+                   {     
+                     res = mysql_store_result(&Mysql); 
+                        
                         row_count= mysql_num_rows(res);             
                         if(row_count != 0)
                         {  
@@ -70,10 +74,10 @@ string sql_ID  =    "select * from "+S("table_name")+" where service_name = '"+S
       else    
       {            
         ret["state"] = "error";
-      }      
+      }   
      mysql_free_result(res);
-     return  ret;
- #undef  MARAMETER  
+   #undef  MARAMETER  
+  return  ret;
 } 
  
  v_result mysql::find(item* ser_name)  //find time <  
@@ -228,8 +232,11 @@ result mysql::del_invalid(item *tm)
       else    //函数错误  
       {            
       ret["state"] ="error";            
-      }     
+      }
+  if(res == NULL)
+ cout<<"test"<<endl;     
  mysql_free_result(res);
+ 
  #undef  MARAMETER
  return ret;
  }  
@@ -257,7 +264,7 @@ result mysql::del_invalid(item *tm)
  }
 
 mysql::~mysql()  
-{
+{  
    mysql_close(&Mysql);   
 } 
  

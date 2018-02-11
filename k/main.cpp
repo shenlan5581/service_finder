@@ -78,10 +78,11 @@ class DefaultHandler : public http::IHandler {
 };
 
 int main(void) {  
-   http::Server server;
+    http::Server server;
     serve_monitor monitor;
     monitor.handle(NULL);   
-
+ 
+   
    server.Handle("/register",  new serve_reg);
    server.Handle("/unregister",new serve_unreg);
    server.Handle("/find",      new serve_find);
@@ -89,6 +90,6 @@ int main(void) {
 
    server.Handle("/test",      new TestHandler);
 
-   server.ListenAndServe(80, 2, 1024, NULL); 
+   server.ListenAndServe(80,2, 1024, NULL); 
  
 }
