@@ -33,7 +33,7 @@ src += http_server.cpp
 obj := $(src:.cpp=.o)
 
 all : $(obj)   #main.o http_server.o
-	g++ -o main $(INCLUDE) $(obj) $(LIBDIR) $(LIB) -Wl,-rpath,../lib -Wl,-rpath,../../lib,-rpath,./ -fPIC
+	g++ -g -o main $(INCLUDE) $(obj) $(LIBDIR) $(LIB) -Wl,-rpath,../lib -Wl,-rpath,../../lib,-rpath,./ -fPIC
 # g++ -o main -I ./ main.o http_server.o
 clean: $(obj)
 	rm -f *.o

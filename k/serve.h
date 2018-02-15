@@ -13,7 +13,7 @@ namespace k
 
 // set mysql  info       username and password
  #define CONNECT          k::item i; \
-                          i["addr"]="192.168.1.104";\
+                          i["addr"]="127.0.0.1";\
                           i["user"]="root";\
                           i["password"]= "xingke";\
                           i["database_name"]="service_finder";

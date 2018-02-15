@@ -152,7 +152,7 @@ result mysql::del(item * id)
             if(row_count != 0)                            
           {  
              if(!mysql_query(&Mysql,sql_del.c_str()))        
-                ret["state"] = "successed";T("d");
+                ret["state"] = "successd";T("d");
           }    
           else   
             {  

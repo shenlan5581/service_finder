@@ -86,7 +86,7 @@ pthread_mutex_unlock(&mutex_mysql);
      
        p=result.find("state");
          string  state = (p=result.find("state"))->second;
-         root["massage"]= state;
+         root["message"]= state;
           root["ret"] = 0;
        if(  state == "successd") 
         { 
@@ -94,11 +94,11 @@ pthread_mutex_unlock(&mutex_mysql);
         }
         else  
         { 
-          root["servers"][0]["id"] =-1;
+          root["servers"][0]["id"] ="-1";
         }
           root["servers"][0]["service_name"] = "-1";
           root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] = -1;
+          root["servers"][0]["port"] = "-1";
        struct evbuffer *buf;
        buf = evbuffer_new();
        Json::FastWriter writer;
@@ -130,20 +130,20 @@ pthread_mutex_unlock(&mutex_mysql);
 
        string  state = (p=result.find("state"))->second;
 
-          root["massage"]= state;
+          root["message"]= state;
           root["ret"] = 0;
 
        if(  state == "successd") 
         { 
-          root["servers"][0]["id"] =(p=result.find("id"))->second;
+          root["servers"][0]["id"] =0;
         }
         else  
         { 
-          root["servers"][0]["id"] =-1;
+          root["servers"][0]["id"] ="-1";
         }
           root["servers"][0]["service_name"] = "-1";
           root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] = -1;
+          root["servers"][0]["port"] = "-1";
        struct evbuffer *buf;
        buf = evbuffer_new();
        Json::FastWriter writer;
@@ -191,10 +191,10 @@ pthread_mutex_unlock(&mutex_mysql);
     else  
         { 
           root["ret"] = 0;
-          root["servers"][0]["id"] =-1;
+          root["servers"][0]["id"] ="-1";
           root["servers"][0]["service_name"] = "-1";
           root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] = -1;
+          root["servers"][0]["port"] =" -1";
         }    
        struct evbuffer *buf;
        buf = evbuffer_new();
@@ -226,7 +226,7 @@ pthread_mutex_unlock(&mutex_mysql);
        p=result.find("state");
        string  state = (p=result.find("state"))->second;
 
-          root["massage"]= state;
+          root["message"]= state;
           root["ret"] = 0;
 
        if(  state == "successd") 
@@ -235,11 +235,11 @@ pthread_mutex_unlock(&mutex_mysql);
         }
         else  
         { 
-          root["servers"][0]["id"] =-1;
+          root["servers"][0]["id"] ="-1";
         }
           root["servers"][0]["service_name"] = "-1";
           root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] = -1;
+          root["servers"][0]["port"] = "-1";
        struct evbuffer *buf;
        buf = evbuffer_new();
        Json::FastWriter writer;
