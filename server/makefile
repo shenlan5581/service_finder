@@ -1,36 +1,43 @@
+ifeq ($(make_basedir), ) 
+	make_basedir := 
+endif
 
-
+CXXFLAGS := -g  -std=c++11
+INCLUDE := -I. 
+INCLUDE += -I$(make_basedir) lib
+INCLUDE += -I$(make_basedir) include
+INCLUDE += -I$(make_basedir) lib/libevent/include
+INCLUDE += -I$(make_basedir) lib/a/include
  
 
-obj = main.o database.o
-src = main.cpp  database.cpp  
+
+LIBDIR := -L. 
+LIBDIR += -L$(make_basedir) lib
+LIBDIR += -L$(make_basedir) lib/libevent/lib 
+#LIBDIR += -L$(make_basedir) lib/sql/lib 
+LIBDIR += -L$(make_basedir) lib/json
+LIBDIR += -L/usr/lib64 
+
+
+LIB := -levent -lpthread -lmysqlclient -ljsoncpp   
+
+.cpp.o:
+	g++ $(CXXFLAGS) $(INCLUDE) -Wno-deprecated -c -o $@ $< 
 
  
+src := main.cpp
+src += http_server.cpp
+src += serve.cpp
+src += database.cpp
+ 
+obj := $(src:.cpp=.o) 
 
-run:main
+run:all
 	./main
-main:$(obj)
-	g++  -o main $(obj)  -lmysqlclient  
-main.o:main.cpp 
-	g++ -c -o main.o main.cpp 
-service_finder_s.o:service_finder_s.cpp
-	g++ -c -o  service_finder_s.o  service_finder_s.cpp
-pthread_work.o:pthread_work.cpp
-	g++ -c -o phtread_work.o pthread_work.cpp
-http_request.o:http_request.cpp
-	g++ -c -o http_request.o http_request.cpp
-database.o:database.cpp
-	g++ -c -o database.o database.cpp
+
+all : $(obj)   
+	g++  -g -o  main $(INCLUDE) $(obj) $(LIBDIR) $(LIB)    -fPIC
  
-	
-clean:$(obj)
-	rm $(obj)
-
-
-gdb:debug
-	gdb debug 
-
-debug:$(src)
-	g++ -g -o debug  $(src) -lmysqlclient  
-
-	
+clean: $(obj)
+	rm -f *.o
+	rm -f main

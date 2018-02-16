@@ -9,7 +9,7 @@ LIBDIR += -L$(BASEDIR)/deps/libevent/lib
 LIBDIR += -L$(BASEDIR)/deps/json
 
  
-LIB := -levent -ljsoncpp
+LIB := -levent -ljsoncpp -lpthread
  
 src := main.cpp 
 src += client.cpp

@@ -3,7 +3,7 @@
 #include "client.h"
 #include <unistd.h> 
 #include <string.h>
-
+#include <assert.h>
 #include "deps/json/json/json.h"
 namespace k
 {
@@ -60,10 +60,12 @@ int Sdk::Register(string service_name,string addr, string port){
     {     
         return -1; 
     }   
-   if( root["message"].asString() == "successd")
+ 
+   if( root["message"].asString() == "success")
    { 
         int  id ;
         id = atoi((root["servers"][0]["id"].asString()).c_str()); 
+        if(execute->HeartBeat_Start(id));
         return id;
    }else{
    return -1;
@@ -73,11 +75,12 @@ int Sdk::Register(string service_name,string addr, string port){
 //==================================================
 
  
-int  Sdk::Unregister(string id){
+int  Sdk::Unregister(int service_id){
   string   uri,result;
      Json::Reader reader;   
      Json::Value  root,ar;
-
+     string id = std::to_string(service_id);
+ 
     if(id.empty())
       return -1;
      
@@ -95,12 +98,14 @@ int  Sdk::Unregister(string id){
     {     
         return -1; 
     }   
-   if( root["message"].asString() == "successd")
+   if( root["message"].asString() == "success")
    { 
+       if(execute->HeartBeat_Stop(service_id))
         return 1;
    }else{
    return -1;
    }
+   return -1;
   }
  
   json  Sdk::Query(string service_name){
@@ -109,14 +114,14 @@ int  Sdk::Unregister(string id){
      Json::Value  root,ar;
 
     if(service_name.empty())
-      return "no";
+      return "name empty";
      
       uri="/find?service_name="+service_name+"";
       global_respone_state = -1;   
        
       int err = execute->handler(uri);
       if(err==-1)
-       return "no";                                     //测试  条件变量？？？
+       return "query failed";                                   
      while(global_respone_state == -1)
      {
      }
@@ -124,18 +129,17 @@ int  Sdk::Unregister(string id){
     
     if(!reader.parse(result,root))
     {     
-        return "no"; 
+        return "result failed"; 
     }   
-   if( root["message"].asString() == "successd")
+   if( root["message"].asString() == "success")
    { 
         return  result;
    }else{
-   return "no";
+     cout<<result<<endl;
+   return "message failed";
    }
   }
-
-
-
+ 
 //=====================================================================
   int EvhttpHandler::SetServerIPandPort(string IP,int port){
    server_ip   = IP;
@@ -169,11 +173,105 @@ string EvhttpHandler::get_result(){
   return result;
 }
 
+int EvhttpHandler::HeartBeat_Start(int service_id){
+     
+     pthread_t pid;
+    if(service_id < 0)
+     {  
+        return -1;
+     }
+     string * id;
+     id = new string;             
+     *id = to_string(service_id);
+     
+     pthread_create(&pid,NULL,KeepAlive,id);  
+     save_pid[service_id]= pid; 
+     return 0;
+ 
+}
+int EvhttpHandler::HeartBeat_Stop(int service_id){
+      int err;
+      pthread_t pid;
+    if(service_id < 0)
+     {
+        return -1;
+     }
+     PID::iterator iter;
+     iter = save_pid.find(service_id);   
+     if(iter == save_pid.end())
+     {   cout<<"no find pid"<<endl;
+     return-1;
+     }
+     err = pthread_cancel(iter->second);
+    if(err == 0)
+     return 1;
+    
+    return -1;
+}
 
 
+void* EvhttpHandler::KeepAlive(void *service_id){   
+      string   uri; 
+      string  id = *(string *)service_id;
+      cout<<id<<endl;
+      Sdk* sdk = Sdk::GetInstance();
+      EvhttpHandler * e =(EvhttpHandler *)sdk->execute; 
+      uri ="/update?id="+id+"";
+       
+      delete (string*)service_id;
+ while(1)
+ {
+   struct  event_base *      base=event_base_new();  
+   //struct  evdns_base *      dns = evdns_base_new(base,1);
+   struct  evhttp_request *  request= evhttp_request_new(EventConnection_cb,base);
+   if(!request)
+   pthread_exit(NULL);
+   //evhttp_request_set_header_cb(request,SetHeader_cb);   
+   evhttp_request_set_chunked_cb(request,EventHeartbeatChunk_cb);
+   evhttp_request_set_error_cb(request,EventError_cb);
+   struct evhttp_connection * http = evhttp_connection_base_new(base,NULL,e->server_ip.c_str(),e->server_port);
+   if(!http)
+   pthread_exit(NULL);
+   evhttp_connection_set_closecb(http,EventClose_cb,NULL);
+   evhttp_make_request(http,request,EVHTTP_REQ_GET,uri.c_str());
+   event_base_dispatch(base);   
+   sleep(TIMEOUT);
+   } 
+}
 
 
+void  EvhttpHandler::EventHeartbeatChunk_cb(struct evhttp_request * req,void*arg)      //chunk
+{
 
+   Json::Reader reader;   
+   Json::Value  root,ar;
+ 
+   string ret;
+   char buf[4096];
+   int n = 0;
+    struct evbuffer* evbuf = evhttp_request_get_input_buffer(req);    //get message
+   memset(buf,0,4096);
+   while ((n = evbuffer_remove(evbuf,buf,4096)) > 0) 
+   {   
+        ret=ret+buf;    
+        memset(buf,0,4096);  
+   } 
+    
+    if(!reader.parse(ret,root))
+    {     
+        cout<<"heartbeat-response error"<<endl; 
+    }   
+   if ( root["message"].asString() == "success")
+   { 
+        cout<<"heartbeat success id:"<<root["servers"][0]["id"].asString()<<endl;
+   }else{
+       cout<<"heartbeat update failed"<<endl; 
+   }
+
+ 
+
+   event_base_loopexit((struct event_base*)arg, NULL);
+}
 
 void EvhttpHandler::EventChunk_cb(struct evhttp_request * req,void *arg)   //chunk
 {  
@@ -196,7 +294,7 @@ void EvhttpHandler::EventChunk_cb(struct evhttp_request * req,void *arg)   //chu
  
 
  void EvhttpHandler::EventConnection_cb(struct evhttp_request * pa1,void*){
-   cout<<"connectcb"<<endl;
+   //cout<<"connectcb"<<endl;
  }
  void  EvhttpHandler::EventError_cb(enum evhttp_request_error,void*arg){
 
