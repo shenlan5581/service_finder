@@ -8,13 +8,13 @@ INCLUDE += -I$(make_basedir) lib
 INCLUDE += -I$(make_basedir) include
 INCLUDE += -I$(make_basedir) lib/libevent/include
 INCLUDE += -I$(make_basedir) lib/a/include
- 
+INCLUDE += -I$(make_basedir) lib/mysql/include
 
 
 LIBDIR := -L. 
 LIBDIR += -L$(make_basedir) lib
 LIBDIR += -L$(make_basedir) lib/libevent/lib 
-#LIBDIR += -L$(make_basedir) lib/sql/lib 
+LIBDIR += -L$(make_basedir) lib/mysql 
 LIBDIR += -L$(make_basedir) lib/json
 LIBDIR += -L/usr/lib64 
 
@@ -36,7 +36,7 @@ run:all
 	./main
 
 all : $(obj)   
-	g++  -g -o  main $(INCLUDE) $(obj) $(LIBDIR) $(LIB)    -fPIC
+	g++  -g -o  main $(INCLUDE) $(obj) $(LIBDIR) $(LIB)  -Wl,-rpath,./lib/mysql   -fPIC
  
 clean: $(obj)
 	rm -f *.o

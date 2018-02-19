@@ -257,7 +257,7 @@ result mysql::del_invalid(item *tm)
                               );"     
      mysql_init(&Mysql);
      cout<<"create database and table"<<endl;
-     mysql_real_connect(&Mysql,"192.168.1.101","root","xingke",NULL,0,NULL,0);
+     mysql_real_connect(&Mysql,"127.0.0.1","root","xingke",NULL,0,NULL,0);
      mysql_query(&Mysql,SQL_CREATE_DATABASE);
      mysql_query(&Mysql,SQL_CHANG_DATABASE); 
      mysql_query(&Mysql,SQL_CREATE_TABLE); 

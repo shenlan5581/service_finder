@@ -81,7 +81,7 @@ int main(void) {
     http::Server server;
     serve_monitor monitor;
     monitor.handle(NULL);   
- 
+  
    server.Handle("/register",  new serve_reg);
    server.Handle("/unregister",new serve_unreg);
    server.Handle("/find",      new serve_find);
