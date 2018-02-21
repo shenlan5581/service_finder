@@ -37,13 +37,11 @@ int main()  //test
     
     ret = sdk->Query("http");                          //find    
     cout<<"find:"<<ret<<endl; 
-    sleep(10);
+    sleep(12);
     err =  sdk->Unregister(id1);      
-    assert(err);
-    cout<<"unregister:"<<id1<<endl;              //unregister
+    cout<<"unregister:"<<err<<endl;              //unregister
     err =  sdk->Unregister(id2);      
-    assert(err);
-    cout<<"unregister:"<<id2<<endl;
+    cout<<"unregister:"<<err<<endl;
     }
 }
 

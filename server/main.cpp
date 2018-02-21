@@ -7,6 +7,9 @@
 #include  "http_server.h" 
 #include  "serve.h"
 #include  "./lib/json/json/json.h"   
+#include  "config.h"
+#include  "log.h"
+
 using namespace std;
 using namespace placeholders;
 using namespace k;
@@ -72,23 +75,31 @@ class DefaultHandler : public http::IHandler {
         cerr << "Failed to get item list: " << query.error() << endl;
       }
     } else {
-      cerr << "DB connection failed: " << conn.error() << endl;
+      err << "DB connection failed: " << conn.error() << endl;
     } */
   } 
 };
 
+
+namespace k{
+  extern ServeLog log;
+}
 int main(void) {  
+
+    k::log.Start();
     http::Server server;
     serve_monitor monitor;
     monitor.handle(NULL);   
+    
+
   
    server.Handle("/register",  new serve_reg);
    server.Handle("/unregister",new serve_unreg);
    server.Handle("/find",      new serve_find);
    server.Handle("/update",    new serve_update);
-
    server.Handle("/test",      new TestHandler);
 
    server.ListenAndServe(80,2, 1024, NULL); 
- 
+
 }
+

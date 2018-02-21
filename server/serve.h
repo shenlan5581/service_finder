@@ -3,13 +3,21 @@
 #define SERVE_H
 
 #include <assert.h>
+#include <string.h>
 #include "http_server.h"
 #include "database.h"
 #include  "./lib/json/json/json.h"  
 #include <pthread.h> 
 #include <unistd.h>
+#include <config.h>
+
+
 namespace k
 {
+
+extern Config * Global_config;
+
+//info of database
 
 // set mysql  info       username and password
  #define CONNECT          k::item i; \
@@ -21,15 +29,10 @@ namespace k
 
 #define TABLE           "service_table"  // datebase table name
 
-#define TIME_FOR_MONITOR                30 
-#define TIME_FOR_NEAR_TO_LAST_UPDATA   "30"          
- 
-
 class serve : public http::IHandler
 {
  public:
  virtual void handle(struct evhttp_request *req)=0;
-    static string time;   
  protected:
     mysql   *sql;  
     int analyze(string *url,item * info);

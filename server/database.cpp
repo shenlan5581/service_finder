@@ -18,16 +18,15 @@ int   mysql::connect(item *acc)
    if(!mysql_real_connect(&Mysql,E("addr"),E("user"),E("password"),E("database_name"),0,NULL,0))
         {                                       
           connect_state = 0; cout <<"01"<<endl;
-      #undef  MARAMETER 
           return 0;          
         }   
       else       //successed           
         {  
            connect_state = 1;     
-       #undef  MARAMETER 
            return 1; 
         }    
     
+ #undef  MARAMETER 
 }  
 
 result mysql::insert(item * service)

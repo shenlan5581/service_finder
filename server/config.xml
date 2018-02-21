@@ -1,0 +1,10 @@
+<root>
+			<ip>127.0.0.1</ip>
+			<user>root</user>
+			<password>xingke</password>
+			<database_name>service_finder</database_name>
+			<table_name>service_table</table_name>
+      <time_out>10</time_out>   
+      <last_update_time>30</last_update_time> 
+      <log_flush_time>5</log_flush_time>
+</root>

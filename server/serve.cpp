@@ -4,18 +4,26 @@
 #include "serve.h"
 #include <string>
 #include <iostream>
- 
+#include "log.h"
 using namespace std;  
 namespace k
 {
- 
-  
-string serve::time = TIME_FOR_NEAR_TO_LAST_UPDATA; 
+extern ServeLog log; 
+
+using namespace std;  
 int serve::create_connection()
 {    
       sql = new mysql; 
-      CONNECT;
- 
+      k::item i;
+      i["addr"] = Global_config->conf_info.addr; 
+      i["user"]=Global_config->conf_info.user;
+      i["password"]= Global_config->conf_info.password;    
+      i["database_name"]= Global_config->conf_info.database_name;     
+
+/* 如果配置在运行时不进行改变 
+   此处应该将配置项作为只读变量，而不是每次获取增加额外开销
+   配置项应该 针对 1运行时读取   或者  2 只在初始化时读取
+*/
       int e = sql->connect(&i);
       if(e)
       return 1;
@@ -168,7 +176,7 @@ pthread_mutex_lock(&mutex_mysql);
        analyze(&url,&info);     
        assert((p=info.find("service_name")) != info.end());
        info["table_name"]=TABLE;
-       info["time"]=time;
+       info["time"]=Global_config->conf_info.last_time;
         
            v_ret = sql->find(&info);  //  mysql
             delete sql;
@@ -247,10 +255,7 @@ pthread_mutex_unlock(&mutex_mysql);
        evbuffer_add_printf(buf, output.c_str());
        evhttp_send_reply(req, HTTP_OK, "OK", buf);
        evbuffer_free(buf);  
-     
-      
     }
-
 void serve_monitor::handle(struct evhttp_request *req)
  {
      pthread_t pid;
@@ -259,26 +264,29 @@ void serve_monitor::handle(struct evhttp_request *req)
      r = pthread_create(&pid,NULL,monitoring,this);
      assert(r == 0);
      //pthread_join(pid, NULL);
-     
     }
 void * serve::monitoring(void * a)
  {   
- 
    serve_monitor *monitor = (serve_monitor *)a;
    while(1)
    {
         
    pthread_mutex_lock(&monitor->mutex_mysql);      
     {      
-       sleep(TIME_FOR_MONITOR);
+       sleep(atoi((Global_config->conf_info.time_out).c_str()));// sleep 
        assert(monitor->create_connection());   
        item info,result;
        item::iterator p;
        info["table_name"] = TABLE; 
-       info["time"] =time;
+       info["time"] =Global_config->conf_info.last_time;
        result=monitor->sql->del_invalid(&info);  //  mysql
        p=result.find("state");
        cout<<"monitoring "<<p->second<<endl;
+//log   
+       	 ServeLogInfo  * info_ =new ServeLogInfo;
+       	 info_->MakeInfo(292,"./log/serve.log","serve.cpp","monitor"+p->second);   
+       	 log.AddLog(info_); 
+
        delete monitor->sql;
      } 
    pthread_mutex_unlock(&monitor->mutex_mysql);
@@ -287,4 +295,4 @@ void * serve::monitoring(void * a)
  }
 }
 
- 
+

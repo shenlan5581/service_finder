@@ -9,7 +9,7 @@ INCLUDE += -I$(make_basedir) include
 INCLUDE += -I$(make_basedir) lib/libevent/include
 INCLUDE += -I$(make_basedir) lib/a/include
 INCLUDE += -I$(make_basedir) lib/mysql/include
-
+INCLUDE += -I$(make_basedir) lib/pugixml
 
 LIBDIR := -L. 
 LIBDIR += -L$(make_basedir) lib
@@ -29,7 +29,12 @@ src := main.cpp
 src += http_server.cpp
 src += serve.cpp
 src += database.cpp
- 
+src += ./lib/pugixml/pugixml.cpp
+src += config.cpp
+src += log.cpp
+
+
+
 obj := $(src:.cpp=.o) 
 
 run:all

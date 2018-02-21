@@ -39,6 +39,7 @@ int Sdk::Register(string service_name,string addr, string port){
      string   uri,result;
      Json::Reader reader;   
      Json::Value  root,ar;
+     int  id ;
   if (service_name.empty()&&addr.empty()&&port.empty())
     return -1;
     uri="/register?service_name="+service_name+"&ip="+addr+"&port="+port+"";
@@ -54,12 +55,11 @@ int Sdk::Register(string service_name,string addr, string port){
         return -1; 
      }   
   if (root["message"].asString() == "success") {
-        int  id ;
         id = atoi((root["servers"][0]["id"].asString()).c_str()); 
-        if (execute_->HeartBeat_Start(id)) 
-        return id;
-      } else {
-       return -1;
+      if (execute_->HeartBeat_Start(id)==0) 
+        return (id);
+  } else {
+        return -1;
       }
 }
 
@@ -200,7 +200,6 @@ int EvhttpHandler::HeartBeat_Stop(int service_id){
 void* EvhttpHandler::KeepAlive(void *service_id){   
       string   uri; 
       string  id = *(string *)service_id;
-      cout<<id<<endl;
       Sdk* sdk = Sdk::GetInstance();
       EvhttpHandler * e =(EvhttpHandler *)sdk->execute_; 
       uri ="/update?id="+id+"";
