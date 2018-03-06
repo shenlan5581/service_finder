@@ -11,7 +11,7 @@ class IHandler {
  public:
   virtual ~IHandler() {}
   virtual void handle(struct evhttp_request *req) = 0;
-};    //lost 
+};  
 
 
 class Server {

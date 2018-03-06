@@ -34,14 +34,13 @@ src += config.cpp
 src += log.cpp
 
 
-
 obj := $(src:.cpp=.o) 
 
 run:all
 	./main
 
 all : $(obj)   
-	g++  -g -o  main $(INCLUDE) $(obj) $(LIBDIR) $(LIB)  -Wl,-rpath,./lib/mysql   -fPIC
+	g++  -g -o  main $(CXXFLAGS) $(INCLUDE) $(obj) $(LIBDIR) $(LIB)  -Wl,-rpath,./lib/mysql   -fPIC
  
 clean: $(obj)
 	rm -f *.o

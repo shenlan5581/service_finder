@@ -1,298 +1,238 @@
-
-
-
-#include "serve.h"
 #include <string>
 #include <iostream>
 #include "log.h"
+#include "serve.h"
+#include "config.h"
+#include "regex"
+namespace k {
 using namespace std;  
-namespace k
-{
-extern ServeLog log; 
 
-using namespace std;  
-int serve::create_connection()
-{    
-      sql = new mysql; 
-      k::item i;
-      i["addr"] = Global_config->conf_info.addr; 
-      i["user"]=Global_config->conf_info.user;
-      i["password"]= Global_config->conf_info.password;    
-      i["database_name"]= Global_config->conf_info.database_name;     
+void Serve::handle(struct evhttp_request *req) {
+ Json::Value  root ;
+ string url = evhttp_request_get_uri(req);  
 
-/* 如果配置在运行时不进行改变 
-   此处应该将配置项作为只读变量，而不是每次获取增加额外开销
-   配置项应该 针对 1运行时读取   或者  2 只在初始化时读取
-*/
-      int e = sql->connect(&i);
-      if(e)
-      return 1;
-      else return 0;
+ regex reg("operate=([a-z]+)&[a-z|\_|0-9]+=[a-z|0-9]+");
+ sregex_iterator it(url.begin(),url.end(),reg);
+ sregex_iterator end;
+if(it != end) {
+  string operate = it->str(1);
+
+ if(operate=="register")
+   root = Register(&url);
+else if(operate=="unregister")
+	 root =	UnRegister(&url);
+else if(operate=="query")
+   root = Query(&url);
+else if(operate=="update")
+   root = Update(&url);
+else {
+   root["message"]="operate error";
+   log_debug("operate error%s",url);
+ }
 }
-
-int serve::analyze( string *url,item * info)   // url
-{   
-  int end=0;
-      string::size_type b,z;
-      string key;
-      string value;
-      b=url->find("?");
-      z=b;
-  while(1)    //key and value
-      {        
-            b=z;    
-            z =url->find("=",b);      
-            if(z == string::npos)
-            return 0;
-            else 
-            key = url->substr(b+1,z-b-1);
-            //test  cout<<"key:"<<key<<"  "; 
-            b = z;                      
-            z = url->find("&",b);
-            if(z == string::npos)          
-              {
-                  z = url->find("\0",b);
-                if(z == string::npos)        
-                  return -1;
-                  else                        
-                    { 
-                      value= url->substr(b+1,z-b-1);
-                      end =1;
-                    }
-              }else
-                 value= url->substr(b+1,z-b-1);
-
-                 //test  cout<<"value:"<<value<<endl;
-                 const string k= key;
-                    (*info)[k]=value;
-               if(end == 1)
-               break;     
-      } 
-   // std::cout << service_name<<ip<<port<<id; //test  
-  return 1; 
-}
- 
- void serve_reg:: handle(struct evhttp_request *req)
- {  
-  pthread_mutex_lock(&mutex_mysql);
-       std::string url = evhttp_request_get_uri(req);    //get url
-       assert(create_connection()); 
-  
-       Json::Value root;  
-       item info,result;
-       item::iterator p;
-       analyze(&url,&info);     
-       assert((p=info.find("service_name")) != info.end());
-       assert((p=info.find("ip")) != info.end());
-       assert((p=info.find("port")) != info.end());
-       info["table_name"]=TABLE; 
- 
-       result=sql->insert(&info);  //  mysql
- 
-       delete sql;
-pthread_mutex_unlock(&mutex_mysql);
-     
-       p=result.find("state");
-         string  state = (p=result.find("state"))->second;
-         root["message"]= state;
-         root["ret"] = 0;
-       if(  state == "success") 
-        { 
-          root["servers"][0]["id"] =(p=result.find("id"))->second; 
-        }
-        else  
-        { 
-          root["servers"][0]["id"] ="-1";
-        }
-          root["servers"][0]["service_name"] = "-1";
-          root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] = "-1";
-       struct evbuffer *buf;
-       buf = evbuffer_new();
-       Json::FastWriter writer;
-       std::string output = writer.write(root);
-       evbuffer_add_printf(buf, output.c_str());
-       evhttp_send_reply(req, HTTP_OK, "OK", buf);
-       evbuffer_free(buf);  
-    
- 
- }
- 
- void serve_unreg::handle(struct evhttp_request *req)
- {
-       std::string url = evhttp_request_get_uri(req);    //get url
-pthread_mutex_lock(&mutex_mysql);
-       assert(create_connection());
-  
-       Json::Value root;  
-       item info,result;
-       item::iterator p;
-       analyze(&url,&info);     
-       assert((p=info.find("id")) != info.end());
-       info["table_name"]=TABLE; 
-
-       result=sql->del(&info);  //  mysql
-       delete sql;
-pthread_mutex_unlock(&mutex_mysql);
-       p=result.find("state");
-
-       string  state = (p=result.find("state"))->second;
-
-          root["message"]= state;
-          root["ret"] = 0;
-
-       if(  state == "success") 
-        { 
-          root["servers"][0]["id"] =0;
-        }
-        else  
-        { 
-          root["servers"][0]["id"] ="-1";
-        }
-          root["servers"][0]["service_name"] = "-1";
-          root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] = "-1";
-       struct evbuffer *buf;
-       buf = evbuffer_new();
-       Json::FastWriter writer;
-       std::string output = writer.write(root);
-       evbuffer_add_printf(buf, output.c_str());
-       evhttp_send_reply(req, HTTP_OK, "OK", buf);
-       evbuffer_free(buf);  
-       
-   
- }
-
-  void serve_find::handle(struct evhttp_request *req)
- {
-       std::string url = evhttp_request_get_uri(req);    //get url
-pthread_mutex_lock(&mutex_mysql);
-       assert(create_connection());
-   
-       Json::Value root;  
-       item info;
-       v_result  v_ret;
-       item::iterator p;
-       analyze(&url,&info);     
-       assert((p=info.find("service_name")) != info.end());
-       info["table_name"]=TABLE;
-       info["time"]=Global_config->conf_info.last_time;
-        
-           v_ret = sql->find(&info);  //  mysql
-            delete sql;
-pthread_mutex_unlock(&mutex_mysql);
-          item result = v_ret[0];
-          p=result.find("state");
-       string  state = (p=result.find("state"))->second;
-         root["message"]= state;
-  if(state == "success") 
-    {     
-           root["ret"] = v_ret.size()-1;
-    for(int i=1;i<v_ret.size();++i) 
-    {     
-      root["servers"][i-1]["id"] = (p=v_ret[i].find("id"))->second;
-      root["servers"][i-1]["service_name"] = (p=v_ret[i].find("service_name"))->second;
-      root["servers"][i-1]["ip"] = (p=v_ret[i].find("ip"))->second;
-      root["servers"][i-1]["port"] =(p=v_ret[i].find("port"))->second;
-    }
-   }  
-    else  
-        { 
-          root["ret"] = 0;
-          root["servers"][0]["id"] ="-1";
-          root["servers"][0]["service_name"] = "-1";
-          root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] =" -1";
-        }    
-       struct evbuffer *buf;
-       buf = evbuffer_new();
-       Json::FastWriter writer;
-       std::string output = writer.write(root);
-       evbuffer_add_printf(buf, output.c_str());
-       evhttp_send_reply(req, HTTP_OK, "OK", buf);
-       evbuffer_free(buf);  
-      
- 
- }
-
-void serve_update::handle(struct evhttp_request *req)
- {
-       std::string url = evhttp_request_get_uri(req);    //get url
-pthread_mutex_lock(&mutex_mysql);
-       assert(create_connection()); 
- 
-       Json::Value root;  
-       item info,result;
-       item::iterator p;
-       analyze(&url,&info);     
-       assert((p=info.find("id")) != info.end());
-       info["table_name"]=TABLE; 
- 
-       result=sql->update(&info);  //  mysql
-       delete sql;
-pthread_mutex_unlock(&mutex_mysql);
-       p=result.find("state");
-       string  state = (p=result.find("state"))->second;
-
-          root["message"]= state;
-          root["ret"] = 0;
-
-       if(  state == "success") 
-        { 
-          root["servers"][0]["id"] =(p=result.find("id"))->second;
-        }
-        else  
-        { 
-          root["servers"][0]["id"] ="-1";
-        }
-          root["servers"][0]["service_name"] = "-1";
-          root["servers"][0]["ip"] = "-1";
-          root["servers"][0]["port"] = "-1";
-       struct evbuffer *buf;
-       buf = evbuffer_new();
-       Json::FastWriter writer;
-       std::string output = writer.write(root);
-       evbuffer_add_printf(buf, output.c_str());
-       evhttp_send_reply(req, HTTP_OK, "OK", buf);
-       evbuffer_free(buf);  
-    }
-void serve_monitor::handle(struct evhttp_request *req)
- {
-     pthread_t pid;
-     int  r;
- pthread_mutex_init(&mutex_mysql,NULL);
-     r = pthread_create(&pid,NULL,monitoring,this);
-     assert(r == 0);
-     //pthread_join(pid, NULL);
-    }
-void * serve::monitoring(void * a)
- {   
-   serve_monitor *monitor = (serve_monitor *)a;
-   while(1)
-   {
-        
-   pthread_mutex_lock(&monitor->mutex_mysql);      
-    {      
-       sleep(atoi((Global_config->conf_info.time_out).c_str()));// sleep 
-       assert(monitor->create_connection());   
-       item info,result;
-       item::iterator p;
-       info["table_name"] = TABLE; 
-       info["time"] =Global_config->conf_info.last_time;
-       result=monitor->sql->del_invalid(&info);  //  mysql
-       p=result.find("state");
-       cout<<"monitoring "<<p->second<<endl;
-//log   
-       	 ServeLogInfo  * info_ =new ServeLogInfo;
-       	 info_->MakeInfo(292,"./log/serve.log","serve.cpp","monitor"+p->second);   
-       	 log.AddLog(info_); 
-
-       delete monitor->sql;
-     } 
-   pthread_mutex_unlock(&monitor->mutex_mysql);
-    
+else {
+   root["message"]="invalid uri";
+   log_warn("invalid uri");
    }
- }
+   struct evbuffer *buf;
+   buf = evbuffer_new();
+	 Json::FastWriter writer;
+	 std::string output = writer.write(root);
+	 evbuffer_add_printf(buf, output.c_str());
+   evhttp_send_reply(req, HTTP_OK, "OK", buf);
+   evbuffer_free(buf);  
 }
+
+Json::Value Serve::Register(string* url) {
+  log_debug("%s",url->c_str());
+  Json::Value  root ;
+  Mysql sql;
+  Pugi conf;
+//  url
+  regex reg("service_name=([a-z]+)&ip=([0-9]+)&port=([0-9]+)");
+  sregex_iterator it(url->begin(),url->end(),reg);
+  sregex_iterator end;
+if(it != end) {
+  string table_name = conf.GetValue("table_name");
+  string s_name = it->str(1);
+  string s_ip   = it->str(2);
+  string s_port = it->str(3);
+//  sql
+sql.Init(conf.GetValue("MysqlIP"),conf.GetValue("Mysqlusr"),conf.GetValue("Mysqlpassword"), conf.GetValue("Mysqldatabase"));   
+string ins ="insert into "+table_name+" (service_name,IP,port)select '"+s_name+"','"+s_ip+"','"+s_port+"' from dual where not exists(select * from "+table_name+" where service_name = '"+s_name+"'and IP = '"+s_ip+"'and port = '"+s_port+"');";
+sql.Query(&ins);
+string sel ="select * from "+table_name+" where service_name = '"+s_name+"'and IP = '"+s_ip+"'and port = '"+s_port+"';";
+result rt = sql.Query(&sel);
+//  result
+if(rt==nullptr){     //return NULL  mysql connect failed
+root["message"] ="failed";
+log_error("insert failed mysql connect failed return NULL%s",ins);
+} else {  //return NULL
+ret::iterator p;
+ret  r;
+r=(*rt)[0];
+p =r.find("state"); 
+ if(p->second == "success") { //success 
+   r =(*rt)[1];
+   root["message"]="success";
+   root["ret"]=1;
+   root["servers"][0]["id"]=(p=r.find("ID"))->second;
+   root["servers"][0]["service_name"] = "-1";
+   root["servers"][0]["ip"] = "-1";
+   root["servers"][0]["port"] = "-1";
+  } else {   
+   root["message"]="failed";
+  }
+}         //return NULL
+} else {  // uri invalid 
+root["message"]="invalid";
+} 
+return root;
+}
+
+Json::Value Serve::UnRegister(string* url) {
+  log_debug("%s",url->c_str());
+  Json::Value  root ;
+  Mysql sql;
+  Pugi conf;
+//  url
+  regex reg("id=([a-z|0-9]+)");
+  sregex_iterator it(url->begin(),url->end(),reg);
+  sregex_iterator end;
+if(it != end) {
+  string table_name = conf.GetValue("table_name");
+  string s_id = it->str(1);
+//  sql
+sql.Init(conf.GetValue("MysqlIP"),conf.GetValue("Mysqlusr"),conf.GetValue("Mysqlpassword"), conf.GetValue("Mysqldatabase"));   
+string sel ="delete from "+table_name+" where ID = '"+s_id+"';";
+result rt = sql.Query(&sel);
+//  result
+if(rt==nullptr){     //return NULL  mysql connect failed
+root["message"] ="failed";
+log_error("delete failed  return NULL%s",sel);
+} else {  //return NULL
+ret::iterator p;
+ret  r;
+r=(*rt)[0];
+p =r.find("state"); 
+ if(p->second == "success") { //success 
+   root["message"]="success";
+   root["ret"]=1;
+   root["servers"][0]["id"]=s_id;
+   root["servers"][0]["service_name"] = "-1";
+   root["servers"][0]["ip"] = "-1";
+   root["servers"][0]["port"] = "-1";
+  } else {   
+   root["message"]="failed";
+  }
+}         //return NULL
+} else {  // uri invalid 
+root["message"]="invalid";
+} 
+return root;
+}
+
+Json::Value Serve::Query(string* url) {
+  log_debug("%s",url->c_str());
+  Json::Value  root ;
+  Mysql sql;
+  Pugi conf;
+//  url
+  regex reg("service_name=([a-z]+)");
+  sregex_iterator it(url->begin(),url->end(),reg);
+  sregex_iterator end;
+if(it != end) {
+  string table_name = conf.GetValue("table_name");
+  string s_name = it->str(1);
+  string query_time = conf.GetValue("query_time");
+//  sql
+sql.Init(conf.GetValue("MysqlIP"),conf.GetValue("Mysqlusr"),conf.GetValue("Mysqlpassword"), conf.GetValue("Mysqldatabase"));   
+string sel ="select * from "+table_name+" where service_name = '"+s_name+"'"+" and  UNIX_TIMESTAMP(time)>UNIX_TIMESTAMP(now())-"+query_time+";";
+result rt = sql.Query(&sel);
+//  result
+if(rt==nullptr){     //return NULL  mysql connect failed
+root["message"] ="failed";
+log_error("query failed  return NULL%s",sel);
+} else {  //return NULL
+ret::iterator p;
+ret  r; 
+r=(*rt)[0];
+p =r.find("state");   
+ if(p->second == "success") { //success 
+   root["message"]="success";
+   root["ret"]=(*rt).size()-1;
+for(int i=1;i<(*rt).size();i++) {
+   root["servers"][i-1]["id"]=            (p =(*rt)[i].find("ID"))->second;
+   root["servers"][i-1]["service_name"] = (p =(*rt)[i].find("service_name"))->second;
+   root["servers"][i-1]["ip"] =           (p =(*rt)[i].find("IP"))->second;
+   root["servers"][i-1]["port"] =         (p =(*rt)[i].find("port"))->second;
+   }
+  } else {       //mysql api function error
+   root["message"]="failed";
+  }
+}         //return NULL
+} else {  // uri invalid 
+root["message"]="invalid";
+} 
+return root;
+}
+
+Json::Value Serve::Update(string* url) {
+  log_debug("%s",url->c_str());
+  Json::Value  root ;
+  Mysql sql;
+  Pugi conf;
+//  url
+  regex reg("id=([0-9]+)");
+  sregex_iterator it(url->begin(),url->end(),reg);
+  sregex_iterator end;
+if(it != end) {
+  string table_name = conf.GetValue("table_name");
+  string s_id = it->str(1);
+//  sql
+sql.Init(conf.GetValue("MysqlIP"),conf.GetValue("Mysqlusr"),conf.GetValue("Mysqlpassword"), conf.GetValue("Mysqldatabase"));   
+string sel = "update "+table_name+" set time = now() where ID = "+s_id+";";
+cout<<sel<<endl;
+result rt = sql.Query(&sel);
+//  result
+if(rt==nullptr){     //return NULL  mysql connect failed
+root["message"] ="failed";
+log_error("query failed  return NULL%s",sel);
+} else {  //return NULL
+ret::iterator p;
+ret  r; 
+r=(*rt)[0];
+p =r.find("state");   
+ if(p->second == "success") { //success 
+   root["message"]="success";
+  } else {       //mysql api function error
+   root["message"]="failed";
+  }
+}         //return NULL
+} else {  // uri invalid 
+root["message"]="invalid";
+} 
+return root;
+}
+
+void Serve::Clear(void) {  //delete invalide service if time out
+while(1) {
+  cout<<"clear"<<endl;
+  Mysql sql;
+  Pugi conf;
+  string query_time = conf.GetValue("query_time");
+  string table_name = conf.GetValue("table_name");
+//  sql
+  sql.Init(conf.GetValue("MysqlIP"),conf.GetValue("Mysqlusr"),conf.GetValue("Mysqlpassword"), conf.GetValue("Mysqldatabase"));   
+string sel ="delete from "+table_name+" where UNIX_TIMESTAMP(time)<UNIX_TIMESTAMP(now())-"+query_time+";";  
+result rt = sql.Query(&sel);
+if(rt==nullptr)     //return NULL  mysql connect failed
+log_error("query failed  return NULL%s",sel);
+
+sleep(atoi((conf.GetValue("time_out")).c_str()));
+}
+}
+}  //namespace
+
 
 

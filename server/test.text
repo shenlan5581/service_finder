@@ -1,6 +1,5 @@
  uri test
-
-
+ 
 http://192.168.1.104/register?service_name=web&ip=192.168.1.100&port=80
 
 http://192.168.1.104/find?service_name=web
@@ -12,3 +11,16 @@ http://192.168.1.104/update?id=45
 数据库查询 只返回 时间小于60秒的 数据 
 
 可以设定时间 自动清除 数据库无效数据
+
+mysql 创建库
+create table IF NOT EXISTS  service_table( 
+                              ID int unsigned not null auto_increment primary key,
+                              service_name char(50) not null, 
+                              IP char(20)    not null, 
+                              port char(10)  not null, 
+                              time timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                              );.
+
+v2
+http://127.0.0.1/service_finder?operate=query&service_name=web
+http://127.0.0.1/service_finder?operate=register&service_name=web&ip=88&port=88

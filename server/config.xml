@@ -1,10 +1,9 @@
 <root>
-			<ip>127.0.0.1</ip>
-			<user>root</user>
-			<password>xingke</password>
-			<database_name>service_finder</database_name>
+			<MysqlIP>127.0.0.1</MysqlIP>
+			<Mysqlusr>root</Mysqlusr>
+			<Mysqlpassword>xingke</Mysqlpassword>
+			<Mysqldatabase>service_finder</Mysqldatabase>
 			<table_name>service_table</table_name>
-      <time_out>10</time_out>   
-      <last_update_time>30</last_update_time> 
-      <log_flush_time>5</log_flush_time>
+                       <time_out>30</time_out>   
+                       <query_time>30</query_time> 
 </root>
