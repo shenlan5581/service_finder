@@ -1,8 +1,8 @@
 /*
-*   sdk for servuce_finder_client
+*   sdk for service_finder_client
 *         
 */
-
+/*
 #ifndef SDK_CLIENT_H
 #define SDK_CLIENT_H
  
@@ -80,3 +80,36 @@ private:
 }//namespace end
  
 #endif     //SDK_CLIENT_H
+*/
+
+ 
+#pragma once
+#include <thread>
+#include <string>
+#include <iostream>
+#include <map>
+#include  "http_curl.h"
+namespace k {    //namespace         
+using namespace std; 
+typedef map<int,pthread_t> Pid;
+// global instance 
+class Sdk {
+ public:  
+  static      Sdk *   GetInstance();            
+  virtual     void    SetServerIPandPort(string IP,int port);               
+  virtual     int     Register(string service_name,string addr, string port);
+  virtual     int     Unregister(int service_id);
+  virtual     JSON    Query(string service_name); 
+  virtual    ~Sdk(); 
+  static     void  *  KeepAlive(void*);
+private:
+  static  int         timeout;  //from server
+  Pid         save_pid_;
+  static  string   server_ip;
+  static  string   server_port;
+              Sdk();
+  static      Sdk * client_;  
+  HttpClient * http;
+}; 
+}//namespace 
+ 

@@ -9,10 +9,11 @@ LIBDIR += -L$(BASEDIR)/deps/libevent/lib
 LIBDIR += -L$(BASEDIR)/deps/json
 
  
-LIB := -levent -ljsoncpp -lpthread
+LIB := -levent -ljsoncpp -lpthread -lcurl
  
 src := main.cpp 
 src += client.cpp
+src += http_curl.cpp
 	 		
 obj := $(src:.cpp=.o)
 

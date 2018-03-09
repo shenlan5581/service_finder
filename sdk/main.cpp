@@ -25,24 +25,17 @@ int main()  //test
     string   ret; 
     int  pot=10;
 
-  for(i=0;i<1000000;i++)
-    {
+
+  for(i=0;i<1;i++) {
     sdk=k::Sdk::GetInstance();
     sdk->SetServerIPandPort("127.0.0.1",80); 
-  
-    id1 = sdk->Register("http","192.168.1.101","80");   //register
-    cout<<"register:"<<id1<<endl; 
+    id1 = sdk->Register("http","192.168.1.101","80"); 
     id2 = sdk->Register("http","192.168.1.102","80");
-    cout<<"register:"<<id2<<endl;
-    
-    ret = sdk->Query("http");                          //find    
-    cout<<"find:"<<ret<<endl; 
-    sleep(12);
-    err =  sdk->Unregister(id1);      
-    cout<<"unregister:"<<err<<endl;              //unregister
-    err =  sdk->Unregister(id2);      
-    cout<<"unregister:"<<err<<endl;
-    }
+    ret = sdk->Query("http");     
+ //   err =  sdk->Unregister(id1);      
+ //   err =  sdk->Unregister(id2);      
+    } 
+sleep(100);
 }
 
  

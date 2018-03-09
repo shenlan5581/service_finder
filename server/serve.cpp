@@ -49,7 +49,7 @@ Json::Value Serve::Register(string* url) {
   Mysql sql;
   Pugi conf;
 //  url
-  regex reg("service_name=([a-z]+)&ip=([0-9]+)&port=([0-9]+)");
+  regex reg("service_name=([a-z]+)&ip=([0-9]+.[0-9]+.[0-9]+.[0-9]+)&port=([0-9]+)");
   sregex_iterator it(url->begin(),url->end(),reg);
   sregex_iterator end;
 if(it != end) {
@@ -75,6 +75,7 @@ p =r.find("state");
  if(p->second == "success") { //success 
    r =(*rt)[1];
    root["message"]="success";
+   root["timeout"]=conf.GetValue("query_time");
    root["ret"]=1;
    root["servers"][0]["id"]=(p=r.find("ID"))->second;
    root["servers"][0]["service_name"] = "-1";
